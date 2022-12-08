@@ -14,9 +14,9 @@ import toBuffer from 'typedarray-to-buffer';
  * @description Provide signing logic for ed25519 curve based key (tz1)
  */
 export class Tz1 {
-  private _key: Uint8Array;
-  private _publicKey: Uint8Array;
-  private isInit: Promise<boolean>;
+  private _key: any;
+  private _publicKey: any;
+  private isInit: any;
 
   /**
    *
@@ -30,14 +30,21 @@ export class Tz1 {
       throw new InvalidKeyError(key, 'Key contains invalid prefix');
     }
 
-    this._key = decrypt(b58cdecode(this.key, prefix[keyPrefix]));
-    this._publicKey = this._key.slice(32);
+    this.isInit = decrypt(b58cdecode(this.key, prefix[keyPrefix]))
+      .then((key: any) => {
+        this._key = key;
+        this._publicKey = this._key.slice(32);
 
-    if (!this._key) {
-      throw new InvalidKeyError(key, 'Unable to decode');
-    }
-
-    this.isInit = this.init();
+        if (!this._key) {
+          throw new InvalidKeyError(key, 'Unable to decode');
+        }
+      })
+      .then(() => {
+        this.init();
+      })
+      .catch((err: any) => {
+        return false;
+      });
   }
 
   private async init() {
